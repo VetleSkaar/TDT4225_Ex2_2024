@@ -14,10 +14,12 @@ def get_labels(user_dir: Path):
     labels_path = user_dir / "labels.txt"
     if not labels_path.exists():
         return None        
+    
     labels = list()
 
     for label in labels_path.read_text().split("\n")[1:-1]:
         label = label.split("\t")
+
         labels.append(dict(
             start_time=datetime.strptime(label[0], LABELS_DATETIME_FORMAT),
             end_time=datetime.strptime(label[1], LABELS_DATETIME_FORMAT),
@@ -27,14 +29,19 @@ def get_labels(user_dir: Path):
 
 def add_activity(mysql_connection, user_id: str, data_file: Path, labels):
     print(f"Creating new activity for {user_id}, {data_file}")
+
     cursor = mysql_connection.cursor()
     cursor.execute("INSERT INTO Activity(user_id) VALUES (%s)", (user_id,))
+
     activity_id = cursor.lastrowid
+
     cursor.execute("LOAD DATA LOCAL INFILE %s INTO TABLE TrackPoint FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' (lat, lon, altitude, date_time) SET activity_id=%s", (str(data_file), activity_id))
     cursor.execute("SELECT MIN(date_time) AS start_time, MAX(date_time) AS end_time FROM TrackPoint WHERE activity_id = %s", (activity_id,))
+
     start_time, end_time = cursor.fetchone()
     print(start_time, end_time)
     mode_of_transport = None
+
     if labels is not None:
         for l in labels:
             if l["start_time"] == start_time and l["end_time"] == end_time:
@@ -46,20 +53,22 @@ def add_activity(mysql_connection, user_id: str, data_file: Path, labels):
 
 
 def import_data_to_mysql(mysql_connection, data_directory: Path):
+    # For better feedback in Console during data import and lookup files. Will create if not present
     if not os.path.exists('.completed_users'):
         with open('.completed_users', 'w') as fh:
-            fh.write('')  # Create an empty file
-
+            fh.write('')
     if not os.path.exists('.completed_users'):
         with open('.completed_files', 'w') as fh:
-            fh.write('')  # Create an empty file
+            fh.write('')
 
     with open(".completed_users", "r+") as fh:
         completed_users = fh.read().split()
     with open(".completed_files", "r+") as fh:
         completed_files = fh.read().split()
+
     print(completed_files, completed_users)
     print(f"Importing from {data_directory}")
+    
     for file, user in walk_dataset(data_directory):
         if user in completed_users:
             continue

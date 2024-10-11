@@ -12,7 +12,7 @@ def remove_lines(output_file_path: Path, remove_line: int):
         file.writelines(lines)
 
 
-# Read file, split it into lines, then by coulmn. Delete field 5 then 3 for every line
+# Read file, split it into lines, then by coulmn
 def remove_columns(output_file_path: Path):        
     with open(output_file_path, 'r') as file:
         lines = file.readlines()
@@ -21,8 +21,7 @@ def remove_columns(output_file_path: Path):
 
     for line in lines:
         coulmn = line.strip().split(',')
-        
-        # Delete 5 first bc else index moves
+        # Index error, delete 5 first
         del coulmn[4]  
         del coulmn[2]
         
@@ -33,7 +32,7 @@ def remove_columns(output_file_path: Path):
         file.writelines('\n'.join(modified_lines))
 
 
-# Read file, split it into lines, then by coulmn. Merge field 3 and 4 (old 6&7) then delete 4 (old 7)
+# Merge field 3 and 4 (old 6&7) then delete 4 (old 7)
 def column_merger(output_file_path: Path):
     with open(output_file_path, 'r') as file:
         lines = file.readlines()
@@ -53,21 +52,22 @@ def column_merger(output_file_path: Path):
         file.writelines('\n'.join(modified_lines))
 
 
-# Check how many lines a file has and returns the length
+# returns the length of file
 def check_length(output_file_path: Path) -> int:
     with open(output_file_path, 'r') as file:
         lines = file.readlines()    
     
     return len(lines)
 
-# Delete a file 
+# Delete 
 def delete_file(output_file_path: Path):
     output_file_path.unlink()
 
 
-# Function to process a single file, if a file has more than 2500 lines it will be deleted
+# Process Func, Delete if more that 2500 entries
 def process_file(input_file_path: Path, output_file_path: Path):
-    print(f"processing: {input_file_path} -> {output_file_path}")
+    print(f"Current: {input_file_path} -> {output_file_path}")
+
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(input_file_path, output_file_path)
     
@@ -80,6 +80,7 @@ def process_file(input_file_path: Path, output_file_path: Path):
     if check_length(output_file_path) >= 2500:
         delete_file(output_file_path)
         return
+    
     remove_columns(output_file_path)
     column_merger(output_file_path)
 
@@ -95,4 +96,6 @@ def process_folder(input_folder: Path, output_folder: Path):
         process_file(input_file_path, output_file_path)
 
 if __name__ == "__main__":
+    # WARN
+    # Hard Coded path, should work if cloned from Repo
     process_folder(Path("TDT4225_Ex2_2024\dataset\dataset\Data"), Path("TDT4225_Ex2_2024\dataset\out\Data"))
